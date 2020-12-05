@@ -17,7 +17,7 @@ function weightedLS(A::Array{Float64,2}, b::Array{Float64,1}, W::Array{Float64,1
     # get size, A is mxn, b is nx1, W is nx1
     m = size(A,1)
     n = size(A,2)
-    max_rank = max(m,n)
+    max_rank = min(m,n)
     Ab = [A b]
     weights = W;
     outweights = zeros(n, 1)
@@ -32,13 +32,13 @@ function weightedLS(A::Array{Float64,2}, b::Array{Float64,1}, W::Array{Float64,1
             Rd[rd_row,:] = rd
             outweights[rd_row] = weights[constraint_row]
             rd_row += 1
-            if rd_row -1 > max_rank
+            if rd_row > max_rank
                 break
             end
 
             m -= 1
 
-            if constraint_row != m-1
+            if constraint_row != m+1
                 Ab[constraint_row,:] = Ab[m+1,:]
                 weights[constraint_row,:] = weights[m+1,:]
             end
@@ -47,20 +47,20 @@ function weightedLS(A::Array{Float64,2}, b::Array{Float64,1}, W::Array{Float64,1
             a_reduced = a_reduced .* 1.0/rd[1,j]
             Ab[1:m,j+1:n+1] -= a_reduced * rd[1:1,j+1:n+1]
         else
-            precision = 0
+            precision = 0.0
             pseudo = zeros(m, 1)
+            rd = zeros(1, n+1)
             for i=1:m
                 ai = a[i]
                 if (abs(ai) > 1e-9)
                     pseudo[i,1] = weights[i]*ai
                     precision += pseudo[i]*ai
                 else
-                    pseudo[i,1] = 0
+                    pseudo[i,1] = 0.0
                 end
             end
             if precision > 1e-8
                 pseudo = pseudo ./ precision
-                rd = zeros(1, n+1)
                 rd[1,j] = 1.0
                 rd[1:1,j+1:n+1] = pseudo' * Ab[1:m,j+1:n+1]
                 Rd[rd_row,:] = rd
@@ -69,7 +69,7 @@ function weightedLS(A::Array{Float64,2}, b::Array{Float64,1}, W::Array{Float64,1
             else
                 continue
             end
-            if rd_row -1 > max_rank
+            if rd_row > max_rank
                 break
             end
             Ab[1:m,j+1:n+1] -= a * rd[1:1,j+1:n+1]
