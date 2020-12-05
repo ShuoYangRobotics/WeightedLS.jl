@@ -30,6 +30,7 @@ function weightedLS(A::Array{Float64,2}, b::Array{Float64,1}, W::Array{Float64,1
         if constraint_row > 0
             rd = Ab[constraint_row:constraint_row,:]
             Rd[rd_row,:] = rd
+            Rd[rd_row,1:rd_row-1] .= 0
             outweights[rd_row] = weights[constraint_row]
             rd_row += 1
             if rd_row > max_rank
@@ -64,6 +65,7 @@ function weightedLS(A::Array{Float64,2}, b::Array{Float64,1}, W::Array{Float64,1
                 rd[1,j] = 1.0
                 rd[1:1,j+1:n+1] = pseudo' * Ab[1:m,j+1:n+1]
                 Rd[rd_row,:] = rd
+                Rd[rd_row,1:rd_row-1] .= 0
                 outweights[rd_row] = precision
                 rd_row += 1
             else
